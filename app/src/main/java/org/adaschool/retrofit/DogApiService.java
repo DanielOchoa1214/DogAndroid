@@ -5,7 +5,7 @@ import retrofit2.http.GET;
 public interface DogApiService {
     @GET("api/breeds/list/all")
     Call<BreedsListDto> getAllBreeds();
-    @GET("api/breed/hound/images/random")
-    Call<BreedDto> getBreed();
+    @GET("api/breeds/image/random")
+    Call<DogResponse> getRandomImage();
 }
 

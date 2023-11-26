@@ -2,59 +2,64 @@ package org.adaschool.retrofit;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 
-import org.adaschool.retrofit.databinding.ActivityMainBinding;
-
-import java.util.Map;
+import java.util.Arrays;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
-
-    private ActivityMainBinding binding;
+    private ImageView imageView;
+    private TextView breedText;
+    private DogApiService service;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        DogApiService dogApiService = RetrofitInstance.getRetrofitInstance().create(DogApiService.class);
+        imageView = findViewById(R.id.image_dog);
+        breedText = findViewById(R.id.text_breed);
+        Button randomButton = findViewById(R.id.button_random);
 
-        Call<BreedDto> call = dogApiService.getBreed();
-        call.enqueue(new Callback<BreedDto>() {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://dog.ceo/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        service = retrofit.create(DogApiService.class);
+
+        randomButton.setOnClickListener(v -> fetchRandomDogImage());
+    }
+
+    private void fetchRandomDogImage() {
+        service.getRandomImage().enqueue(new Callback<DogResponse>() {
             @Override
-            public void onResponse(Call<BreedDto> call, Response<BreedDto> response) {
-                if (response.isSuccessful()) {
-                    BreedDto breed = response.body();
-                    Log.d(TAG, "Response URL IMAGE : " + breed.getMessage());
-                    loadDogInfo(breed.getMessage());
-                } else {
-                    Log.e(TAG, "Error en la respuesta de la API");
+            public void onResponse(Call<DogResponse> call, Response<DogResponse> response) {
+                if(response.isSuccessful() && response.body() != null) {
+                    DogResponse dogResponse = response.body();
+                    String imageUrl = dogResponse.getMessage();
+                    String[] splitedUrl = imageUrl.split("/");
+                    Glide.with(MainActivity.this).load(imageUrl).into(imageView);
+                    breedText.setText(splitedUrl[4]);
                 }
             }
 
             @Override
-            public void onFailure(Call<BreedDto> call, Throwable t) {
-                Log.e(TAG, "Error al llamar a la API", t);
+            public void onFailure(Call<DogResponse> call, Throwable t) {
+                Log.d(String.valueOf(Log.DEBUG), "Me ñañe", t);
             }
         });
     }
-
-    private void loadDogInfo(String dogImageUrl) {
-        String dogName = "Random dog";
-        binding.textView.setText(dogName);
-        Glide.with(this)
-                .load(dogImageUrl)
-                .into(binding.imageView);
-    }
-
-
 }

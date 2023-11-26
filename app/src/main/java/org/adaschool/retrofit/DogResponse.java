@@ -1,6 +1,6 @@
 package org.adaschool.retrofit;
 
-public class BreedDto {
+public class DogResponse {
 
     private String status;
 
